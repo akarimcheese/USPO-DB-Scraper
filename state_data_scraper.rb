@@ -49,7 +49,7 @@ years.each {|year|
 				end
 			end
 		}
-	elsif (year_num>6 && year_num<13)
+	elsif (year_num>6 && year_num != 15)
 		page.css("tr").each { |row|
 			abv,n,uti,des,plt,rei,tot,sirs = nil,nil,nil,nil,nil,nil,nil,nil
 			if row.css("td").size == 8 then
@@ -72,19 +72,18 @@ years.each {|year|
 		}
 	else
 		page.css("tr").each { |row|
-			
+			dummy,abv,n,uti,des,plt,rei,tot = row.css("td").map{|x| x.text.chomp}
 
-			if row.text =~ (/(\w\w)\s+(\w+(\s\w+)*)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)/) && usstates.include?($2) then
-
-				if(!states[$1]) then
-					states[$1] = {}
+			if (usstates.include?(n)) then
+				if (!states[abv]) then
+					states[abv] = {}
 				end
-				states[$1][year] = {"utility"=>$4.to_i,
-								"design"=>$5.to_i,
-								"plant"=>$6.to_i,
-								"reissue"=>$7.to_i,
-								"totals"=>$8.to_i,
-								"SIRS"=>$9.to_i}
+				states[abv][year] = {"utility"=>uti.to_i,
+									"design"=>des.to_i,
+									"plant"=>plt.to_i,
+									"reissue"=>rei.to_i,
+									"totals"=>tot.to_i,
+									"SIRS"=>"Not Provided"}
 			end
 		}
 	end
