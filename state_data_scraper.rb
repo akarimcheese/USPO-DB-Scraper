@@ -18,7 +18,7 @@ usstates = ["ALABAMA", "ALASKA", "ARIZONA", "ARKANSAS", "CALIFORNIA",
 			"OREGON", "PENNSYLVANIA", "RHODE ISLAND", "SOUTH CAROLINA", 
 			"SOUTH DAKOTA", "TENNESSEE", "TEXAS", "UTAH", "VERMONT", 
 			"VIRGINIA", "WASHINGTON", "WEST VIRGINIA", "WISCONSIN", 
-			"WYOMING", "DISTRICT OF COLUMBIA"]
+			"WYOMING", "DISTRICT OF COLUMBIA", "DISTRICT OF COLU"]
 states = {}
 
 years.each {|year|
@@ -27,7 +27,7 @@ years.each {|year|
 	if (year_num >90 || year_num < 02) then
 		text = page.css('pre').text
 		text.each_line { |line|
-			if line =~ (/(\w\w)\s+(\w+(\s\w+)*)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)/) && usstates.include?($2) && $1!="GE" then
+			if line =~ (/(\w\w)\s+(\w+(\s\w+)*)\s+([0-9,]+)\s+([0-9,]+)\s+([0-9,]+)\s+([0-9,]+)\s+([0-9,]+)\s+([0-9,]+)/) && usstates.include?($2) && $1!="GE" then
 
 				if(!states[$1]) then
 					states[$1] = {}
@@ -49,13 +49,13 @@ years.each {|year|
 				end
 			end
 		}
-	elsif (year_num>6 && year_num != 15)
+	elsif (year_num>1 && year_num != 15)
 		page.css("tr").each { |row|
 			abv,n,uti,des,plt,rei,tot,sirs = nil,nil,nil,nil,nil,nil,nil,nil
 			if row.css("td").size == 8 then
-				abv,n,uti,des,plt,rei,tot,sirs = row.css("td").map{|x| x.text.chomp}
+				abv,n,uti,des,plt,rei,tot,sirs = row.css("td").map{|x| x.text.lstrip.rstrip.chomp}
 			else
-				dummy,abv,n,uti,des,plt,rei,tot,sirs = row.css("td").map{|x| x.text.chomp}
+				dummy,abv,n,uti,des,plt,rei,tot,sirs = row.css("td").map{|x| x.text.lstrip.rstrip.chomp}
 			end
 
 			if (usstates.include?(n)) then
@@ -83,7 +83,7 @@ years.each {|year|
 									"plant"=>plt.to_i,
 									"reissue"=>rei.to_i,
 									"totals"=>tot.to_i,
-									"SIRS"=>"Not Provided"}
+									"SIRS"=>0}
 			end
 		}
 	end
@@ -104,4 +104,20 @@ states.each { |s,h|
 		}
 	}
 
+}
+
+CSV.open("sheets/us_patent_data.csv","wb") {|csv|
+	csv << ["state","year","utility","design","plant","reissue","total","sirs"]
+	states.each { |s,h|
+		h.each { |year,data|
+			fullyear = nil
+			if year.to_i > 90 then
+				fullyear = "19"+year
+			else
+				fullyear = "20"+year
+			end
+			csv << [s,fullyear,data["utility"],data["design"],data["plant"],
+					data["reissue"],data["totals"],data["SIRS"]]
+		}
+	}
 }
